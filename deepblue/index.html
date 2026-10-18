@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepBlue: BLE L2CAP Tester | Savant Labs</title>
+  <meta name="description" content="DeepBlue tests Bluetooth Low Energy devices: scan, explore GATT, open L2CAP channels, send data and measure throughput, all on your phone.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #050510;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .bg-glow {
+      position: fixed; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(61,90,254,0.14) 0%, rgba(61,90,254,0.04) 40%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+    .bg-glow-bottom {
+      position: fixed; bottom: -50%; left: 30%;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(38,198,218,0.07) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+    .page {
+      position: relative; z-index: 1; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 48px 24px;
+    }
+    .back {
+      position: absolute; top: 24px; left: 24px;
+      color: #4a4a5a; text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back:hover { color: #3D5AFE; }
+    .hero { text-align: center; max-width: 600px; margin-bottom: 40px; animation: fadeUp 0.8s ease both; }
+    .hero-icon {
+      width: 112px; height: 112px; border-radius: 26px; overflow: hidden; margin: 0 auto 28px;
+      box-shadow: 0 8px 32px rgba(61,90,254,0.30), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+    .hero-icon img { width: 100%; height: 100%; display: block; }
+    .hero h1 { font-size: 34px; font-weight: 700; color: #fff; margin-bottom: 12px; letter-spacing: -0.4px; }
+    .hero .subtitle { font-size: 17px; color: #7a7a8a; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+    .features {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      max-width: 640px; margin-bottom: 40px; animation: fadeUp 0.8s ease 0.1s both;
+    }
+    .chip {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 100px; padding: 8px 18px; font-size: 13px; font-weight: 500; color: #8a8a9a;
+    }
+    .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #26C6DA; box-shadow: 0 0 8px rgba(38,198,218,0.5); }
+    .details {
+      max-width: 600px; width: 100%; margin-bottom: 40px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+    .card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 18px 20px;
+    }
+    .card h3 { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .card p { font-size: 13px; color: #7a7a8a; line-height: 1.5; }
+    .cta { animation: fadeUp 0.8s ease 0.3s both; text-align: center; }
+    .play-link {
+      display: inline-flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, rgba(61,90,254,0.16), rgba(124,77,255,0.08));
+      border: 1px solid rgba(61,90,254,0.28); border-radius: 14px; padding: 14px 28px;
+      color: #fff; text-decoration: none; font-size: 15px; font-weight: 500;
+      transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+    }
+    .play-link:hover { transform: translateY(-2px); border-color: rgba(61,90,254,0.5); box-shadow: 0 8px 24px rgba(61,90,254,0.18); }
+    .play-link svg { width: 28px; height: 28px; flex-shrink: 0; opacity: 0.9; }
+    .play-text .small { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: #7a7a8a; display: block; line-height: 1; margin-bottom: 3px; }
+    .play-text .big { display: block; line-height: 1; font-weight: 600; }
+    .note { margin-top: 14px; font-size: 12px; color: #4a4a5a; }
+    footer { position: relative; z-index: 1; width: 100%; text-align: center; padding: 32px 24px; font-size: 13px; color: #2a2a3a; }
+    footer a { color: #3a3a4a; text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: #3D5AFE; }
+    footer .sep { margin: 0 10px; }
+    .tm { max-width: 600px; margin: 0 auto 8px; font-size: 11px; color: #2a2a3a; line-height: 1.5; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 520px) {
+      .hero h1 { font-size: 26px; }
+      .hero .subtitle { font-size: 15px; }
+      .details { grid-template-columns: 1fr; }
+      .hero-icon { width: 92px; height: 92px; border-radius: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="bg-glow-bottom"></div>
+
+  <div class="page">
+    <a class="back" href="/">&larr; Savant Labs</a>
+
+    <div class="hero">
+      <div class="hero-icon">
+        <img src="icon.png" alt="DeepBlue app icon" width="112" height="112">
+      </div>
+      <h1>DeepBlue</h1>
+      <p class="subtitle">Test Bluetooth Low Energy devices: scan, explore GATT, open L2CAP channels, send data and measure throughput, all on your phone.</p>
+    </div>
+
+    <div class="features">
+      <div class="chip"><div class="chip-dot"></div>Scan BLE devices</div>
+      <div class="chip"><div class="chip-dot"></div>GATT explorer</div>
+      <div class="chip"><div class="chip-dot"></div>L2CAP channels</div>
+      <div class="chip"><div class="chip-dot"></div>Throughput tests</div>
+      <div class="chip"><div class="chip-dot"></div>Bluetooth log</div>
+    </div>
+
+    <div class="details">
+      <div class="card"><h3>Built for engineers</h3><p>Firmware developers, hardware engineers and QA teams bringing up BLE devices.</p></div>
+      <div class="card"><h3>Pairs only when needed</h3><p>Connects and discovers services without pairing. Pairing happens only if a characteristic or channel requires it.</p></div>
+      <div class="card"><h3>Your data stays on your phone</h3><p>No account. Bluetooth data never leaves the device unless you export it.</p></div>
+      <div class="card"><h3>Free with Pro option</h3><p>Free with ads. DeepBlue Pro removes ads and adds PSM sweep, loopback server and automation.</p></div>
+    </div>
+
+    <div class="cta">
+      <a href="https://play.google.com/store/apps/details?id=com.savantlabs.deepblue" class="play-link">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.61 1.814L13.793 12 3.61 22.186a.996.996 0 01-.61-.92V2.734c0-.382.218-.72.61-.92zM14.5 12.707l2.55 2.55-8.37 4.746 5.82-7.296zM17.256 9.95l2.39 1.396c.552.318.89.862.89 1.45 0 .59-.338 1.134-.89 1.453l-2.18 1.274-2.79-3.523 2.58-2.05zM8.68 4.498l8.37 4.746-2.55 2.55-5.82-7.296z"/>
+        </svg>
+        <div class="play-text">
+          <span class="small">Get it on</span>
+          <span class="big">Google Play</span>
+        </div>
+      </a>
+      <p class="note">Requires Android 12 or later with Bluetooth Low Energy.</p>
+    </div>
+  </div>
+
+  <footer>
+    <p class="tm">Bluetooth is a trademark of Bluetooth SIG, Inc. DeepBlue is an independent tool and is not affiliated with or endorsed by Bluetooth SIG.</p>
+    &copy; 2026 Savant Labs
+    <span class="sep">&middot;</span>
+    <a href="privacy.html">Privacy policy</a>
+    <span class="sep">&middot;</span>
+    <a href="mailto:nikheelvs@gmail.com?subject=DeepBlue">Contact</a>
+  </footer>
+</body>
+</html>
